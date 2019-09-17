@@ -10,8 +10,10 @@ let xv = 0, yv = 0;
 
 //random velocity for x and y axis.
 function randomVelocity(){
-        xv = Math.floor( Math.random() * 4); // numeric 3 is just for speed.
+        xv = Math.floor( Math.random() * 4); // numeric 4 is just for speed.
         yv = Math.round( Math.random() * 4);
+        xv % 2 == 0 ? xv = +xv : xv = -xv;
+        yv % 2 == 0 ? yv = +yv : yv = -yv;
 }
 
 randomVelocity();
@@ -90,7 +92,21 @@ function player(){
 function ball(){
     draw();
     player();
-    radius =  (canvas.height / 12) / 2; 
+    radius =  (canvas.height / 12) / 2;
+    
+
+    //changing minus sign in case velocity in minus ( velocity in minus only because it can change the direction ).
+    if ( Math.sign( xv ) == -1 && ballX < 0 + radius){
+        xv = -xv;
+        ballX = radius;
+        console.log( {ballY , ballX} );
+    }
+    if ( Math.sign( yv ) == -1 && ballY < 0 + radius){
+        yv = -yv;
+        ballY = radius;
+        console.log( {ballY , ballX} );
+    }
+    
     if( ballX > canvas.width - radius)
         flagX = 1;
     else if( ballX < 0 + radius ){
