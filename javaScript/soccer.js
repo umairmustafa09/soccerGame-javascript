@@ -2,31 +2,39 @@ const canvas = document.getElementById( "canvas" );
 const context = canvas.getContext( "2d" );
 
 
-let ballX = window.innerWidth  / 2, ballY = window.innerHeight / 2, radius = 0, playerX = 0, playerY = 0 , flagX = 0, flagY = 0;
-let xv = 0, yv = 0;
 
+//declaring and intializing variables.
+let ball = { 
+                x: Math.floor( window.innerWidth  / 2 ),
+                y: Math.floor( window.innerHeight / 2 ), 
+                velocity: { x: 0, y: 0 },
+                mass: 1,
+                radius:  Math.floor( window.innerHeight / 12 ) / 2  
+            };
+
+
+let player = { 
+                x: 0,
+                y: 0,
+                mass: 1,
+                velocity: { x: 2, y: 3 },
+                radius: Math.floor( window.innerHeight / 10 ) / 2 
+            };
+
+
+
+//calling function when window start or restart 
+randomVelocity();
+draw();
+setInterval( movingBall, 10 );
 
 
 
 //random velocity for x and y axis.
 function randomVelocity(){
-        xv = Math.floor( Math.random() * 4); // numeric 4 is just for speed.
-        yv = Math.round( Math.random() * 4);
-        xv % 2 == 0 ? xv = +xv : xv = -xv;
-        yv % 2 == 0 ? yv = +yv : yv = -yv;
+        ball.velocity.x = ( Math.random() - 0.5 ) * 5;
+        ball.velocity.y  = ( Math.random() - 0.5 ) * 5;
 }
-
-randomVelocity();
-draw();
-setInterval( ball , 10 );
-
-while( xv == 0 || yv == 0 ){
-    randomVelocity();
-}
-
-console.log( { xv, yv });
-
-
 
 
 
@@ -34,12 +42,10 @@ function draw(){
     canvas.height = window.innerHeight;
     canvas.width = window.innerWidth;
     //addign background color.
-    radius =  (canvas.height / 10) / 2; 
     context.fillStyle = "rgb( 61, 75, 80 )";
     context.fillRect( 0, 0, canvas.width, canvas.height);
     groundDesign();
 }
-
 
 
 
@@ -64,68 +70,112 @@ function groundDesign(){
 
 
 
-
 canvas.onmousemove = function ( evnet ){
     //condition to stick player in its boundry.
-    if( evnet.clientX < ( canvas.width / 2 ) - radius){
-        playerX = evnet.clientX, playerY = evnet.clientY; 
+    if( evnet.clientX < ( canvas.width / 2 ) - player.radius){
+        player.x = evnet.clientX, player.y = evnet.clientY; 
     }
-    player();
+    user();
 }
 
 
 
-
-
-function player(){
+function user(){
+    player.radius =  Math.floor( (canvas.height / 10) / 2 );
     context.strokeStyle = "orange";
     context.fillStyle = "orange";
     context.beginPath();
-    context.arc( playerX, playerY, radius, 0, 2 * Math.PI );
+    context.arc( player.x, player.y, player.radius, 0, 2 * Math.PI );
     context.stroke();
     context.fill();
 }
 
 
 
-
-function ball(){
+function movingBall(){
     draw();
-    player();
-    radius =  (canvas.height / 12) / 2;
+    user();
+    ball.radius =  Math.floor( (canvas.height / 12) / 2 );
+
+
+    //changing state of flag when x and y axis of ball touches the boundry.
+   
+
+    if( ball.x - ball.radius <= 0 || ball.x + ball.radius >= canvas.width )
+        ball.velocity.x = -ball.velocity.x;
+    else if( ball.y - ball.radius <= 0 || ball.y + ball.radius >= canvas.height )
+        ball.velocity.y = -ball.velocity.y;
+
+
+    const td = distance( ball, player )
+    if ( td <= ball.radius + player.radius ){
+        resolveCollision( ball, player );
+        // console.log( ball.radius + player.radius, td );
+    }
+
+    ball.x += ball.velocity.x;
+    ball.y += ball.velocity.y;
+
     
-
-    //changing minus sign in case velocity in minus ( velocity in minus only because it can change the direction ).
-    if ( Math.sign( xv ) == -1 && ballX < 0 + radius){
-        xv = -xv;
-        ballX = radius;
-        console.log( {ballY , ballX} );
-    }
-    if ( Math.sign( yv ) == -1 && ballY < 0 + radius){
-        yv = -yv;
-        ballY = radius;
-        console.log( {ballY , ballX} );
-    }
-    
-    if( ballX > canvas.width - radius)
-        flagX = 1;
-    else if( ballX < 0 + radius ){
-        flagX = 0;
-    }
-    else if( ballY > canvas.height - radius )
-        flagY = 1;
-    else if( ballY < 0 + radius ){
-        flagY = 0;
-    }
-
-    flagX == 0 ? ballX += xv : ballX -= xv;
-    flagY == 0 ? ballY += yv : ballY -= yv;
-
     //desing ball.
     context.strokeStyle = "white";
     context.fillStyle = "white";
     context.beginPath();
-    context.arc( ballX, ballY, radius, 0, 2 * Math.PI );
+    context.arc( ball.x, ball.y, ball.radius, 0, 2 * Math.PI );
     context.stroke();
     context.fill();
+}
+
+
+
+function distance(ball, player){
+    let d =  ( ball.x - player.x ) * ( ball.x - player.x ) + ( ball.y - player.y ) * ( ball.y - player.y );
+    let td = Math.sqrt( d );
+    return td;
+}   
+
+
+
+function rotate(velocity, angle) {
+    const rotatedVelocities = {
+        x: velocity.x * Math.cos(angle) - velocity.y * Math.sin(angle),
+        y: velocity.x * Math.sin(angle) + velocity.y * Math.cos(angle)
+    };
+
+    return rotatedVelocities;
+}
+
+
+
+function resolveCollision(ball, player) {
+    const xVelocityDiff = ball.velocity.x - player.velocity.x;
+    const yVelocityDiff = ball.velocity.y - player.velocity.y;
+
+    const xDist = player.x - ball.x;
+    const yDist = player.y - ball.y;
+
+    // Prevent accidental overlap of balls
+    if (xVelocityDiff * xDist + yVelocityDiff * yDist >= 0) {
+
+        // Grab angle between the two colliding balls
+        const angle = -Math.atan2(player.y - ball.y, player.x - ball.x);
+
+        // Store mass in var for better readability in collision equation
+        const m1 = player.mass;
+        const m2 = ball.mass;
+
+        // Velocity before equation
+        const u1 = rotate(ball.velocity, angle);
+        const u2 = rotate(player.velocity, angle);
+
+        // Velocity after 1d collision equation
+        const v1 = { x: u1.x * (m1 - m2) / (m1 + m2) + u2.x * 2 * m2 / (m1 + m2), y: u1.y };
+
+        // Final velocity after rotating axis back to original location
+        const vFinal1 = rotate(v1, -angle);
+
+        // Swap ball velocities for realistic bounce effect
+        ball.velocity.x = vFinal1.x;
+        ball.velocity.y = vFinal1.y;
+    }
 }
