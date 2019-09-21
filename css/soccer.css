@@ -1,3 +1,27 @@
 #canvas{
     margin: -8.5px;
 }
+#top{
+    position: absolute;
+    float: left;
+    color: white;
+}
+#top button{
+    background-color: #FAE8A3;
+    color: #7E5935;
+    height: 40px;
+    width: 150px;
+    outline:  none;
+    border-radius: 50px;
+    float: right;
+    position: relative;
+    margin-top: 10px;
+    border: 1px solid #7E5935;
+    font-weight: bold;
+}
+#heading{
+    position: relative;
+    font-family: Arial;
+    left: 200px;
+    bottom: 38px;
+}

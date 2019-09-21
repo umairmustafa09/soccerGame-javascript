@@ -19,19 +19,29 @@ let player = {  x: 0,
                 radius: Math.floor( window.innerHeight / 10 ) / 2 
 };
 
+let opponent = {    x: window.innerWidth - 50,
+                    y: window.innerHeight / 2,
+                    mass: 1,
+                    velocity: { x: 0.5, y: 0 },
+                    radius: Math.floor( window.innerHeight / 10 ) / 2,
+                    velocity: { y: 0 },
+};
+
 
 
 //calling function when window start or restart 
 randomVelocity();
 draw();
 setInterval( movingBall, 10 );
+setInterval( opponentBall, 10 );
 
 
 
 //random velocity for x and y axis.
 function randomVelocity(){
-        ball.velocity.x = ( Math.random() - 0.5 ) * 10;
-        ball.velocity.y  = ( Math.random() - 0.5 ) * 10;
+        ball.velocity.x = ( Math.random() - 1 ) * 5;
+        ball.velocity.y  = ( Math.random() - 1 ) * 5;
+        opponent.velocity.y = Math.abs( ball.velocity.y )
 }
 
 
@@ -39,6 +49,7 @@ function randomVelocity(){
 function draw(){
     canvas.height = window.innerHeight;
     canvas.width = window.innerWidth;
+
     //addign background color.
     context.fillStyle = "rgb( 61, 75, 80 )";
     context.fillRect( 0, 0, canvas.width, canvas.height);
@@ -73,15 +84,16 @@ onmousemove = function ( event ){
     const td = distance( ball, tempPlayer );
     
     if( tempPlayer.x + player.radius < canvas.width / 2 )
-        if( td  > ball.radius + player.radius)
+        if( td  > ball.radius + player.radius * 1.8)
             player.x = event.clientX , player.y = event.clientY;
-    user();
+    PlayerBall();
 }
 
 
 
-function user(){
+function PlayerBall(){
     player.radius =  Math.floor( (canvas.height / 10) / 2 );
+    //displaying player's ball on the screen.
     context.strokeStyle = "orange";
     context.fillStyle = "orange";
     context.beginPath();
@@ -91,12 +103,45 @@ function user(){
 }
 
 
+//opponent ball function.
+function opponentBall(){
+    const td = distance( ball, opponent );
+    opponent.radius =  Math.floor( (canvas.height / 10) / 2 );
+
+    if( td  > ball.radius + opponent.radius * 1.8)
+        ball.y > opponent.y ? opponent.y += opponent.velocity.y : opponent.y -= opponent.velocity.y;
+
+
+    if ( td <= ball.radius + opponent.radius ){
+            let rotatedVelocities =  rotate(); 
+            ball.velocity.x = -rotatedVelocities.x;
+            ball.velocity.y = -rotatedVelocities.y; 
+
+            ball.x += ball.velocity.x;
+            ball.y += ball.velocity.y;
+            opponent.velocity.y = Math.abs( ball.velocity.y )
+    }
+
+
+    //displaying opponent's ball on the screen.
+    context.strokeStyle = "brown";
+    context.fillStyle = "brown";
+    context.beginPath();
+    context.arc( opponent.x, opponent.y, opponent.radius, 0, 2 * Math.PI );
+    context.stroke();
+    context.fill();
+}
+
+
 
 function movingBall(){
     draw();
-    user();
-    ball.radius =  Math.floor( (canvas.height / 12) / 2 );
+    PlayerBall();
+    opponentBall();
 
+    
+    ball.radius =  Math.floor( (canvas.height / 12) / 2 );
+    
     //changing state of flag when x and y axis of ball touches the boundry.
     if( ball.x - ball.radius <= 0 || ball.x + ball.radius >= canvas.width )
         ball.velocity.x = -ball.velocity.x;
@@ -107,7 +152,6 @@ function movingBall(){
 
     const td = distance( ball, player );
     if ( td <= ball.radius + player.radius ){
-        // console.log( td, ball.radius + player.radius );
             let rotatedVelocities =  rotate(); 
             ball.velocity.x = -rotatedVelocities.x;
             ball.velocity.y = -rotatedVelocities.y; 
@@ -137,6 +181,7 @@ function distance(ball, player){
 
 
 
+
 function rotate() {
     const angle = -Math.atan2(ball.y,ball.x);
 
@@ -144,6 +189,6 @@ function rotate() {
         x: ball.velocity.x * Math.cos(angle) -  ball.velocity.y * Math.sin(angle),
         y: ball.velocity.x * Math.sin(angle) +  ball.velocity.y * Math.cos(angle)
     };
-    
+
     return rotatedVelocities;
 }
